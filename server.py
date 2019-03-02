@@ -1,3 +1,4 @@
+import argparse
 import socket
 
 
@@ -15,8 +16,13 @@ def listen_reader(host, port):
 
 
 if __name__ == '__main__':
-    HOST = 'localhost'
-    PORT = 8000
-    print("Start")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", "-p", dest="port", default=8000, type=int, help="Port")
+    parser.add_argument("--host", dest="host", default="localhost", type=str, help="Host IP")
+
+    args = parser.parse_args()
+    HOST = args.host
+    PORT = args.port
+    print("Server start...")
     for line in listen_reader(HOST, PORT):
         print(line)
