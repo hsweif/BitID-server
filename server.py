@@ -1,18 +1,32 @@
 import argparse
 import socket
+import threading
+import queue
 
 
-def listen_reader(host, port):
-    """ Open specified port and return file-like object """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # set SOL_SOCKET.SO_REUSEADDR=1 to reuse the socket if
-    # needed later without waiting for timeout (after it is
-    # closed, for example)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((host, port))
-    sock.listen(0)  # do not queue connections
-    request, addr = sock.accept()
-    return request.makefile('r', 0)
+class TagReader(threading.Thread):
+    def __init__(self, stop_event, host, port, buf_size=512):
+        threading.Thread.__init__(self)
+        self.host = host
+        self.port = port
+        self.stopped = stop_event
+        self.buf_size = buf_size
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.s.connect((self.host, self.port))
+        except BlockingIOError:
+            pass
+        print('connected: ' + str(self.s))
+
+    def run(self):
+        while not self.stopped.is_set():
+            try:
+                data = self.s.recv(self.buf_size).decode('utf-8')
+                print(data)
+            except(socket.error, IndexError, ValueError) as e:
+                print(e)
+                continue
+        self.s.close()
 
 
 if __name__ == '__main__':
@@ -24,5 +38,7 @@ if __name__ == '__main__':
     HOST = args.host
     PORT = args.port
     print("Server start...")
-    for line in listen_reader(HOST, PORT):
-        print(line)
+    q = queue.Queue()
+    stop = threading.Event()
+    tag_reader = TagReader(stop, HOST, PORT, 512)
+    tag_reader.start()
