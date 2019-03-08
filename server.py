@@ -31,9 +31,8 @@ class TagReader(threading.Thread):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", "-p", dest="port", default=8000, type=int, help="Port")
+    parser.add_argument("--port", "-p", dest="port", default=14, type=int, help="Port")
     parser.add_argument("--host", dest="host", default="localhost", type=str, help="Host IP")
-
     args = parser.parse_args()
     HOST = args.host
     PORT = args.port
