@@ -6,3 +6,10 @@ This repo is used for the experiment demand of Project AutoID, a pervasive compu
 docker build -t autoid_server .
 docker run -it --rm --name autoid_running autoid_server 
 ```
+
+## Dependencies
+If you want to use local python environment. Make sure your interpreter contains packages below.
+Suppose you use pip to manage your packages, run these commands.
+```bash
+pip install flask
+```

@@ -1,8 +1,14 @@
 import argparse
 import socket
 import threading
+from threading import Timer
 import queue
+import requests
+from flask import Flask, request
 
+
+vueUpdateRFIDUrl = 'http://localhost:8000/updateRFID'
+interval = 3
 
 class TagReader(threading.Thread):
     def __init__(self, stop_event, host, port, buf_size=512):
@@ -29,15 +35,91 @@ class TagReader(threading.Thread):
         self.s.close()
 
 
+candidateList = []
+
+app = Flask(__name__)
+@app.route('/')
+def hello_world():
+    return 'hello world'
+
+@app.route('/save-tag', methods=['POST'])
+def save_tag():
+    print('save-tag')
+    print(request.form)
+    content = request.form['content']
+    print(content)
+    return 'success'
+
+@app.route('/update-rfid', methods=['GET'])
+def update_rfid():
+    // TODO: Implement here
+    global candidateList
+    return candidateList
+
+class DataPreprocess():
+    def __init__(self):
+        self.xInput = {}
+        self.threshold = 100
+    def continuousRead(self):
+        s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        # TODO: 改成从config读取
+        s.connect(('192.168.53.131',14))
+        first_number = ''
+        global candidateList
+        while True:
+            data = s.recv(2048).decode()
+            if data:
+                # 处理不完整的信息
+                data = first_number + data
+                first_number = ''
+                while not  data[-1:] == '\n':
+                    first_number = data[-1:] + first_number
+                    data =  data[:-1]
+
+                datalist = re.split('[,;]', data)
+                i = 0
+                for item in datalist:
+                    k = i % 9
+                    if item == '':
+                        continue
+                    else:
+                        if k  ==  1:
+                            self.xInput['EPC'] = item
+                        elif k == 2:
+                            self.xInput['Antenna'] = int(item)
+                        elif k == 3:
+                            self.xInput['Freq'] = float(item)
+                        elif k == 4:
+                            self.xInput['ReaderTimestamp'] = timedelta(seconds = (float(item)/1000))
+                        elif k == 5:
+                            self.xInput['RSSI'] = float(item)
+                        elif k == 6:
+                            self.xInput['Doppler'] = float(item)
+                        elif k == 7:
+                            self.xInput['Phase'] = float(item)
+                        elif k == 8:
+                            self.xInput['ComputerTimestamp'] = timedelta(seconds = (float(item[:-1])/1000))
+                        else:
+                            if(self.xInput['RSSI'] > self.threshold):
+                                candidateList.append(self.xInput['EPC'])
+                        i += 1
+            else:
+                break
+            # print(self.xInput)
+            
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", "-p", dest="port", default=14, type=int, help="Port")
-    parser.add_argument("--host", dest="host", default="localhost", type=str, help="Host IP")
-    args = parser.parse_args()
-    HOST = args.host
-    PORT = args.port
-    print("Server start...")
-    q = queue.Queue()
-    stop = threading.Event()
-    tag_reader = TagReader(stop, HOST, PORT, 512)
-    tag_reader.start()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--port", "-p", dest="port", default=14, type=int, help="Port")
+    # parser.add_argument("--host", dest="host", default="localhost", type=str, help="Host IP")
+    # args = parser.parse_args()
+    # HOST = args.host
+    # PORT = args.port
+    # print("Server start...")
+    # q = queue.Queue()
+    # stop = threading.Event()
+    # tag_reader = TagReader(stop, HOST, PORT, 512)
+    # tag_reader.start()
+    app.run(port=8888, debug=True)
+
+        
