@@ -5,6 +5,7 @@ from threading import Timer
 import queue
 import requests
 from flask import Flask, request
+from flask_cors import *
 
 
 vueUpdateRFIDUrl = 'http://localhost:8000/updateRFID'
@@ -35,9 +36,11 @@ class TagReader(threading.Thread):
         self.s.close()
 
 
-candidateList = []
+candidateList = [1,2,3]
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
+
 @app.route('/')
 def hello_world():
     return 'hello world'
@@ -50,11 +53,12 @@ def save_tag():
     print(content)
     return 'success'
 
-@app.route('/update-rfid', methods=['GET'])
+@app.route('/update-epc', methods=['GET'])
 def update_rfid():
-    // TODO: Implement here
+    # TODO: Implement here
     global candidateList
-    return candidateList
+    epcList = {'epc': candidateList}
+    return str(epcList) 
 
 class DataPreprocess():
     def __init__(self):
