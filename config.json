@@ -1,0 +1,15 @@
+{
+    "storeMethod": "local",
+    "objectPath": "./objects",
+    "mongoDB": {
+        "host": "localhost",
+        "port": 27017,
+        "dbName": "autoid",
+        "objCol": "objects",
+        "username": "",
+        "password": ""
+    },
+    "serverPort": 8888,
+    "readerIP": "192.168.53.131",
+    "readerPort": 14
+}
