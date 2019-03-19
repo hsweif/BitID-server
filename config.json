@@ -6,10 +6,11 @@
         "port": 27017,
         "dbName": "autoid",
         "objCol": "objects",
+        "tagCol": "tags",
         "username": "",
         "password": ""
     },
     "serverPort": 8888,
-    "readerIP": "192.168.53.131",
+    "readerIP": "127.0.0.1",
     "readerPort": 14
 }

@@ -4,7 +4,7 @@ import DataHandler
 import queue
 import json
 import threading
-from ObjectHandler import ObjectHandler
+import DatabaseHandler as db
 from DataHandler import DataHandler
 
 vueUpdateRFIDUrl = 'http://localhost:8000/updateRFID'
@@ -15,7 +15,6 @@ CORS(app, supports_credentials=True)
 q = queue.Queue()
 stop = threading.Event()
 dataHandler = DataHandler(stop)
-objHandler = ObjectHandler()
 
 @app.route('/')
 def hello_world():
@@ -24,7 +23,8 @@ def hello_world():
 @app.route('/save-tag', methods=['POST'])
 def save_tag():
     content = request.form['content']
-    objHandler.saveObject(content)
+    print(content)
+    db.mongoHandler.insertTag(json.loads(content))
     return 'success'
 
 @app.route('/update-epc', methods=['GET'])
@@ -33,10 +33,16 @@ def update_rfid():
 
 @app.route('/get-objects', methods=['GET'])
 def get_objects():
-    objList = objHandler.getObjects()
-    j = {'objects': test_l}
+    objList = db.mongoHandler.getObjects()
+    j = {'objects': objList}
     return json.dumps(j) 
 
+@app.route('/get-object-state', methods=['POST'])
+def get_object_state():
+    objName = request.form['objName']
+    infoList = dataHandler.getTagState(objName)
+    j = {'info': infoList}
+    return json.dumps(j) 
 
 if __name__ == '__main__':
     dataHandler.start()

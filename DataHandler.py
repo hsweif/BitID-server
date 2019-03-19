@@ -5,18 +5,22 @@ import os
 import time
 from datetime import datetime, timedelta
 import threading
+import DatabaseHandler as db
+import queue
 
 class DataHandler(threading.Thread):
     def __init__(self, stop_event):
         threading.Thread.__init__(self)
         self._stop = stop_event
         self.xInput = {}
-        self.threshold = 100
+        self.xInput['RSSI'] = 0 
+        self.xInput['EPC'] = ''
+        self.threshold = -100
         config = util.loadConfig()
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host = config['readerIP']
         self.port = config['readerPort']
-        self.maxRSSI = 0
+        self.maxRSSI = -200 
         self.maxEPC = ''
         self.bufSize = 2048
         try:
@@ -27,21 +31,33 @@ class DataHandler(threading.Thread):
         resetThread.start()
     def resetEPC(self):
         while True:
-            self.maxRSSI = 0
+            self.maxRSSI = -300 
             self.maxEPC = ''
             time.sleep(1)
     def updateEPC(self, rssi, epc):
         if rssi > self.maxRSSI:
+            self.maxRSSI = rssi
             self.maxEPC = epc
     def getTopTag(self):
-        return 'ONLY for testing'
         if self.maxRSSI > self.threshold:
+            print('rfid info' +str(self.maxRSSI) +self.maxEPC)
             return self.maxEPC 
         else:
-            return None
+            return 'None' 
+    def getObjectInfo(self, objName):
+        tagList = db.mongoHandler.getRelatedTags(objName)
+        infoList = []
+        for tag in tagList:
+            info = {"tag": tag, "state": self.getTagState(tag)}
+            infoList.append(info)
+        return infoList
+    def getTagState(self, tag):
+        # TODO: Integrate with QIANZI part
+        pass
     def run(self):
-        # TODO: 改成从config读取
         first_number = ''
+        reset_thread = threading.Thread(target=self.resetEPC, args=())
+        reset_thread.start()
         while True:
             data = self.s.recv(self.bufSize).decode()
             if data:
@@ -51,7 +67,6 @@ class DataHandler(threading.Thread):
                 while not  data[-1:] == '\n':
                     first_number = data[-1:] + first_number
                     data =  data[:-1]
-
                 datalist = re.split('[,;]', data)
                 i = 0
                 for item in datalist:
@@ -77,7 +92,12 @@ class DataHandler(threading.Thread):
                             self.xInput['ComputerTimestamp'] = timedelta(seconds = (float(item[:-1])/1000))
                         else:
                             self.updateEPC(self.xInput['RSSI'], self.xInput['EPC'])
-                        i += 1
+                        i = i + 1 
             else:
                 break
 
+if __name__ == '__main__':
+    q = queue.Queue()
+    stop = threading.Event()
+    dataHandler = DataHandler(stop)
+    dataHandler.start()
