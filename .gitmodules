@@ -1,0 +1,3 @@
+[submodule "AutoID_ML"]
+	path = AutoID_ML
+	url = https://github.com/saintnever/AutoID_ML.git
