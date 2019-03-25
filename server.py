@@ -12,7 +12,7 @@ from DataHandler import DataHandler
 import fromback as fb
 import util
 
-vueUpdateRFIDUrl = 'http://localhost:8000/updateRFID'
+vueUpdateEPCUrl = 'http://localhost:8000/updateEPC'
 interval = 3
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ CORS(app, supports_credentials=True)
 # stop = threading.Event()
 # dataHandler = DataHandler(stop)
 config = util.loadConfig()
-fb.receivedata(config['readerIP'], config['readerPort'])
+#fb.receivedata(config['readerIP'], config['readerPort'])
 
 @app.route('/')
 def hello_world():
@@ -35,21 +35,39 @@ def save_tag():
     return 'success'
 
 @app.route('/update-epc', methods=['GET'])
-def update_rfid():
+def update_EPC():
     return dataHandler.getTopTag()
+
+@app.route('/get-complex-objects', methods=['GET'])
+def get_complex_objects():
+    raw_objList = db.mongoHandler.getObjects()
+    objList = []
+    cnt = 0
+    for raw in raw_objList:
+        objList.append({"label_value": cnt, "label_name": raw})
+        cnt = cnt + 1
+    j = {'objects': objList}
+    return json.dumps(j) 
 
 @app.route('/get-objects', methods=['GET'])
 def get_objects():
     objList = db.mongoHandler.getObjects()
     j = {'objects': objList}
-    return json.dumps(j) 
+    return json.dumps(j)
 
 @app.route('/get-object-state', methods=['POST'])
 def get_object_state():
     objName = request.form['objName']
     epcList = db.mongoHandler.getRelatedTags(objName)
     infoList = fb.processdata(epcList)
-    j = {'info': infoList}
+    state_list = []
+    cnt = 0
+    for item in infoList:
+        sem = db.mongoHandler.getTagSemantic(epcList[cnt], item)
+        print(sem)
+        state_list.append(sem)
+        cnt = cnt + 1
+    j = {'info': state_list}
     return json.dumps(j) 
 
 if __name__ == '__main__':

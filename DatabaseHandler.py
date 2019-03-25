@@ -40,13 +40,24 @@ class DatabaseHandler:
             item = self.objCol.find_one({"name": name})
             if item is not None:
                 origList = item['RelatedTag']
-                if rawData['RFID'] not in origList:
-                    origList.append(rawData['RFID'])
+                if rawData['EPC'] not in origList:
+                    origList.append(rawData['EPC'])
                 self.objCol.update_one({"name": name}, {"$set": {"RelatedTag": origList}})
+    def getTagSemantic(self, epc, state):
+        print(epc)
+        item = self.tagCol.find_one({"EPC": epc})
+        sem = ''
+        if item is None:
+            return sem
+        if state == True: #detected
+            sem = item['Semantic'][0]['ON']
+        else: #undetected
+            sem = item['Semantic'][0]['OFF']
+        return sem
 
 mongoHandler = DatabaseHandler()
 
 if __name__ == '__main__':
-    mongoHandler.insertTag({"RFID": 'testid2', "TagType": 'Sensor', "Semantic": [{"RelatedObject": "desk1"}]})
+    mongoHandler.insertTag({"EPC": 'testid2', "TagType": 'Sensor', "Semantic": [{"RelatedObject": "desk1"}]})
     item = mongoHandler.objCol.find_one({"name": "desk1"})
     print(item)

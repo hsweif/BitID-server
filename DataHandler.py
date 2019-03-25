@@ -40,7 +40,7 @@ class DataHandler(threading.Thread):
             self.maxEPC = epc
     def getTopTag(self):
         if self.maxRSSI > self.threshold:
-            print('rfid info' +str(self.maxRSSI) +self.maxEPC)
+            print('EPC info' +str(self.maxRSSI) +self.maxEPC)
             return self.maxEPC 
         else:
             return 'None' 
