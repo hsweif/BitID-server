@@ -17,9 +17,9 @@ interval = 3
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-q = queue.Queue()
-stop = threading.Event()
-dataHandler = DataHandler(stop)
+# q = queue.Queue()
+# stop = threading.Event()
+# dataHandler = DataHandler(stop)
 config = util.loadConfig()
 #fb.receivedata(config['readerIP'], config['readerPort'])
 
@@ -56,6 +56,22 @@ def get_complex_objects():
 def get_objects():
     objList = db.mongoHandler.getObjects()
     j = {'objects': objList}
+    print(objList)
+    return json.dumps(j)
+
+@app.route('/get-object-sem', methods=['POST'])
+def get_object_sem():
+    objName = request.form['objName']
+    semList = []
+    rawList = db.mongoHandler.getSensorSemantic(objName)
+    if util.DEBUG:
+        print(objName)
+        print(rawList)
+    cnt = 0
+    for raw in rawList:
+        semList.append({"label_value": cnt, "label_name": raw})
+        cnt = cnt + 1
+    j = {'semantic': semList}
     return json.dumps(j)
 
 @app.route('/get-object-state', methods=['POST'])
@@ -77,5 +93,5 @@ def get_object_state():
     return json.dumps(j) 
 
 if __name__ == '__main__':
-    dataHandler.start()
+    # dataHandler.start()
     app.run(port=8888, debug=True)

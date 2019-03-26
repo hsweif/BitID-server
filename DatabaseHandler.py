@@ -49,7 +49,17 @@ class DatabaseHandler:
             if rawData['EPC'] not in origList:
                 origList.append(rawData['EPC'])
             self.objCol.update_one({"name": name}, {"$set": {tagType: origList}})
-
+    def getSensorSemantic(self, objName):
+        semList = []
+        tagList = self.getRelatedTag(objName, util.SENSOR)
+        for epc in tagList:
+            on_sem = self.getTagSemantic(epc, True)
+            off_sem = self.getTagSemantic(epc, False)
+            if on_sem != '':
+                semList.append(on_sem)
+            if off_sem != '':
+                semList.append(off_sem)
+        return semList
     def getTagSemantic(self, epc, state):
         if util.DEBUG:
             print(epc)

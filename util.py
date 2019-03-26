@@ -13,3 +13,5 @@ def filtFileName(rawName, kind='JSON'):
     return rawName[:-l]
 
 DEBUG = True
+SENSOR = 'Sensor'
+INTERACTION = 'Interaction'
