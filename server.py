@@ -59,6 +59,28 @@ def get_objects():
     print(objList)
     return json.dumps(j)
 
+@app.route('/get-toggle', methods=['GET'])
+def get_toggles():
+    # TODO: implement toggle return
+    toggleList = []
+    if util.DEBUG:
+        toggleList = ['door']
+    j = {'toggle': toggleList}
+    return json.dumps(j) 
+
+
+@app.route('/get-toggle-action', methods=['POST'])
+def get_toggle_action():
+    # TODO: implement toggle action
+    toggleAction = []
+    rawAction = ['open the door', 'close the door']
+    cnt = 0
+    for raw in rawAction:
+        toggleAction.append({"label_value": cnt, "label_name": raw})
+        cnt = cnt + 1
+    j = {'action': toggleAction}
+    return json.dumps(j)
+
 @app.route('/get-object-sem', methods=['POST'])
 def get_object_sem():
     objName = request.form['objName']
