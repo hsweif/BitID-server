@@ -45,7 +45,7 @@ class DataHandler(threading.Thread):
         else:
             return 'None' 
     def getObjectInfo(self, objName):
-        tagList = db.mongoHandler.getRelatedTags(objName)
+        tagList = db.mongoHandler.getRelatedSensors(objName)
         infoList = []
         for tag in tagList:
             info = {"tag": tag, "state": self.getTagState(tag)}

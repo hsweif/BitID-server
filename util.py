@@ -11,3 +11,5 @@ def filtFileName(rawName, kind='JSON'):
     '''
     l = len(kind) + 1
     return rawName[:-l]
+
+DEBUG = True

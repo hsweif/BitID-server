@@ -17,9 +17,9 @@ interval = 3
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-# q = queue.Queue()
-# stop = threading.Event()
-# dataHandler = DataHandler(stop)
+q = queue.Queue()
+stop = threading.Event()
+dataHandler = DataHandler(stop)
 config = util.loadConfig()
 #fb.receivedata(config['readerIP'], config['readerPort'])
 
@@ -36,6 +36,9 @@ def save_tag():
 
 @app.route('/update-epc', methods=['GET'])
 def update_EPC():
+    if util.DEBUG:
+        epc = dataHandler.getTopTag()
+        print(epc)
     return dataHandler.getTopTag()
 
 @app.route('/get-complex-objects', methods=['GET'])
@@ -58,10 +61,13 @@ def get_objects():
 @app.route('/get-object-state', methods=['POST'])
 def get_object_state():
     objName = request.form['objName']
-    epcList = db.mongoHandler.getRelatedTags(objName)
+    epcList = db.mongoHandler.getRelatedTag(objName, 'Sensor')
+    print(objName)
     infoList = fb.processdata(epcList)
     state_list = []
     cnt = 0
+    if util.DEBUG:
+        infoList = [True]
     for item in infoList:
         sem = db.mongoHandler.getTagSemantic(epcList[cnt], item)
         print(sem)
@@ -71,5 +77,5 @@ def get_object_state():
     return json.dumps(j) 
 
 if __name__ == '__main__':
-    # dataHandler.start()
+    dataHandler.start()
     app.run(port=8888, debug=True)
