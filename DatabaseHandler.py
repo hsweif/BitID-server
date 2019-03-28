@@ -1,5 +1,7 @@
 import pymongo
 import util
+import argparse
+import json
 
 class DatabaseHandler:
     def __init__(self):
@@ -9,11 +11,14 @@ class DatabaseHandler:
         dbName = config['mongoDB']['dbName']
         objColName = config['mongoDB']['objCol']
         tagColName = config['mongoDB']['tagCol']
+        toggleColName = config['mongoDB']['toggleCol']
         path = 'mongodb://'+host+':'+str(port)+'/'
         self.client = pymongo.MongoClient(path)
         self.db = self.client[dbName]
         self.objCol = self.db[objColName]
         self.tagCol = self.db[tagColName]
+        self.togCol = self.db[toggleColName]
+        self.relatedTags = {} 
     def insertObject(self, objName):
         newObj = {"name": objName, "RelatedSensor": [], "RelatedInteraction": []}
         cnt = 0
@@ -28,27 +33,60 @@ class DatabaseHandler:
         for obj in self.objCol.find():
             objList.append(obj["name"])
         return objList
+    def getToggles(self):
+        toggleList = []
+        for tog in self.togCol.find():
+            toggleList.append(tog["name"])
+        return toggleList
+    def getToggleControl(self, toggleName):
+        ctrList = []
+        toggle = self.togCol.find_one({"name": toggleName})
+        if toggle is not None:
+            ctrList = toggle["control"]
+        return ctrList
     def getRelatedTag(self, objName, kind):
-        item = self.objCol.find_one({"name": objName})
-        if item is None:
-            return []
-        elif kind != 'Sensor' and kind != 'Interaction':
-            return []
-        key = 'Related' + kind # kine: Sensor, Interaction
-        return item[key]
+        if objName not in self.relatedTags.keys():
+            item = self.objCol.find_one({"name": objName})
+            tagL = []
+            if item is None:
+                tagL = []
+            elif kind != 'Sensor' and kind != 'Interaction':
+                tagL = []
+            else:
+                key = 'Related' + kind # kine: Sensor, Interaction
+                tagL = item[key]
+            self.relatedTags[objName] = tagL
+        return self.relatedTags[objName] 
     def insertTag(self, rawData):
+        r = self.tagCol.insert_one(rawData)
+        if util.DEBUG:
+            print(r)
         semList = rawData['Semantic']
-        self.tagCol.insert_one(rawData)
         tagType = 'Related' + rawData['TagType']
-        for sem in semList:
-            name = sem['RelatedObject']
-            if name == '':
-                continue
-            self.insertObject(name)
-            origList = self.getRelatedTag(name, rawData['TagType'])
-            if rawData['EPC'] not in origList:
-                origList.append(rawData['EPC'])
-            self.objCol.update_one({"name": name}, {"$set": {tagType: origList}})
+        if rawData['TagType'] == 'Sensor':
+            for sem in semList:
+                name = sem['RelatedObject']
+                if name == '':
+                    continue
+                self.insertObject(name)
+                origList = self.getRelatedTag(name, rawData['TagType'])
+                if rawData['EPC'] not in origList:
+                    origList.append(rawData['EPC'])
+                self.objCol.update_one({"name": name}, {"$set": {tagType: origList}})
+        elif rawData['TagType'] == 'Interaction':
+            for sem in semList:
+                condList = sem['condition']
+                for cond in condList:
+                    name = cond['object']
+                    if name == '':
+                        continue
+                    self.insertObject(name)
+                    origList = self.getRelatedTag(name, rawData['TagType'])
+                    if rawData['EPC'] not in origList:
+                        origList.append(rawData['EPC'])
+                    self.objCol.update_one({"name": name}, {"$set": {tagType: origList}})
+                togList = sem['toggle']
+                #TODO: Do someting for toggle list
     def getSensorSemantic(self, objName):
         semList = []
         tagList = self.getRelatedTag(objName, util.SENSOR)
@@ -76,5 +114,28 @@ class DatabaseHandler:
 mongoHandler = DatabaseHandler()
 
 if __name__ == '__main__':
-    mongoHandler.insertTag({"EPC": 'testid2', "TagType": 'Sensor', "Semantic": [{"RelatedObject": "desk4"}]})
-    item = mongoHandler.objCol.find_one({"name": "desk1"})
+    # mongoHandler.insertTag({"EPC": 'testid2', "TagType": 'Sensor', "Semantic": [{"RelatedObject": "desk4"}]})
+    # item = mongoHandler.objCol.find_one({"name": "desk1"})
+    print('This is the interaction mode to set up toggle meaning')
+    while True:
+        objName = input('Please input the object name. Empty to exit:\n')
+        if objName == '':
+            break
+        semList = []
+        print('Please input the controllable action. Left empty means finish adding:')
+        while True:
+            sem = input('One another control action:\n')
+            if sem == '':
+                break
+            semList.append(sem)
+        item = mongoHandler.togCol.find_one({"name": objName})
+        print(item)
+        if item is None:
+            mongoHandler.togCol.insert_one({"name": objName, "control": []})
+            item = mongoHandler.togCol.find_one({"name": objName})
+        origList = item["control"]
+        for s in semList:
+            origList.append(s)
+        if util.DEBUG:
+            print(origList)
+        mongoHandler.togCol.update_one({"name": objName}, {"$set": {"control": origList}})

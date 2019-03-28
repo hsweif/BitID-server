@@ -21,7 +21,8 @@ CORS(app, supports_credentials=True)
 # stop = threading.Event()
 # dataHandler = DataHandler(stop)
 config = util.loadConfig()
-#fb.receivedata(config['readerIP'], config['readerPort'])
+# fb.receivedata(config['readerIP'], config['readerPort'])
+# recvThread = threading.Thread(target=fb.receivedata, args=(config['readerIP'], config['readerPort']))
 
 @app.route('/')
 def hello_world():
@@ -37,9 +38,10 @@ def save_tag():
 @app.route('/update-epc', methods=['GET'])
 def update_EPC():
     if util.DEBUG:
-        epc = dataHandler.getTopTag()
+        # epc = dataHandler.getTopTag()
+        epc = fb.getTopTag()
         print(epc)
-    return dataHandler.getTopTag()
+    return fb.getTopTag()
 
 @app.route('/get-complex-objects', methods=['GET'])
 def get_complex_objects():
@@ -62,18 +64,16 @@ def get_objects():
 @app.route('/get-toggle', methods=['GET'])
 def get_toggles():
     # TODO: implement toggle return
-    toggleList = []
-    if util.DEBUG:
-        toggleList = ['door']
+    toggleList = db.mongoHandler.getToggles()
     j = {'toggle': toggleList}
     return json.dumps(j) 
 
 
 @app.route('/get-toggle-action', methods=['POST'])
 def get_toggle_action():
-    # TODO: implement toggle action
+    togName = request.form['toggle']
     toggleAction = []
-    rawAction = ['open the door', 'close the door']
+    rawAction = db.mongoHandler.getToggleControl(togName)
     cnt = 0
     for raw in rawAction:
         toggleAction.append({"label_value": cnt, "label_name": raw})
@@ -100,15 +100,17 @@ def get_object_sem():
 def get_object_state():
     objName = request.form['objName']
     epcList = db.mongoHandler.getRelatedTag(objName, 'Sensor')
-    print(objName)
-    infoList = fb.processdata(epcList)
+    fb.updateEPCList(epcList)
+    infoList = fb.getResult() 
+    if util.DEBUG:
+        print(epcList)
+        print(infoList)
     state_list = []
     cnt = 0
-    if util.DEBUG:
-        infoList = [True]
     for item in infoList:
         sem = db.mongoHandler.getTagSemantic(epcList[cnt], item)
-        print(sem)
+        if util.DEBUG:
+            print(sem)
         state_list.append(sem)
         cnt = cnt + 1
     j = {'info': state_list}
@@ -116,4 +118,10 @@ def get_object_state():
 
 if __name__ == '__main__':
     # dataHandler.start()
+    # recvThread.start()
+    recvThread = threading.Thread(target=fb.receivedata, args=(config['readerIP'], config['readerPort']))
+    prThread = threading.Thread(target=fb.processdata, args=())
+    # prcsThread = threading.Thread(target=fb.processdata, args=())
+    recvThread.start()
+    prThread.start()
     app.run(port=8888, debug=True)

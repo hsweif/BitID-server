@@ -7,6 +7,10 @@ from datetime import datetime, timedelta
 import threading
 import DatabaseHandler as db
 import queue
+import sys
+sys.path.append('./AutoID_ML')
+import AutoID_ML.fromback as fb
+from AutoID_ML.button_bitid import Button
 
 class DataHandler(threading.Thread):
     def __init__(self, stop_event):
@@ -23,6 +27,8 @@ class DataHandler(threading.Thread):
         self.maxRSSI = -200 
         self.maxEPC = ''
         self.bufSize = 2048
+        self.index = 0
+        self.resultlist = []
         try:
             self.s.connect((self.host, self.port))
         except BlockingIOError:
@@ -46,14 +52,38 @@ class DataHandler(threading.Thread):
             return 'None' 
     def getObjectInfo(self, objName):
         tagList = db.mongoHandler.getRelatedSensors(objName)
+        tagStateList = self.processdata(tagList)
         infoList = []
-        for tag in tagList:
-            info = {"tag": tag, "state": self.getTagState(tag)}
-            infoList.append(info)
+        for tag, tagState in tagList, tagStateList:
+            tagSem = db.mongoHandler.getTagSemantic(tag, tagState)
+            infoList.append({"tag": tag, "state": tagSem})
         return infoList
-    def getTagState(self, tag):
-        # TODO: Integrate with QIANZI part
-        pass
+    def processdata(self, EPClist):
+        buttonlist = []
+        for item in EPClist:
+            tempbutton = Button(item)
+            buttonlist.append(tempbutton)
+        timeEnd = timedelta(seconds = 0)
+        win = timedelta(seconds=0.2)
+        step = timedelta(seconds=0.1)
+        resultlist = []
+        # while True:
+        if len(self.xInput['ReaderTimestamp']):
+            while True:
+                temp = max(self.xInput['ReaderTimestamp'])
+                # 考虑两个时间节点，一个是按照step走的timeEnd，还有一个是现在接收到的数据的最迟时间
+                if  temp > timeEnd:
+                    timeEnd = temp
+                    break
+                else:
+                    time.sleep(0.1)
+            timeStart = timeEnd - win
+            index  = lower_bound(self.xInput['ReaderTimestamp'],index,len(self.xInput['ReaderTimestamp']),timeStart)
+            for item in buttonlist:
+                resultlist.append(item.winstatusChangelist(self.xInput,index))
+            # print(button.winstatusChangelist(xInput,index))
+            timeEnd = timeEnd+step
+        return resultlist
     def run(self):
         first_number = ''
         reset_thread = threading.Thread(target=self.resetEPC, args=())

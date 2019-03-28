@@ -7,10 +7,11 @@
         "dbName": "autoid",
         "objCol": "objects",
         "tagCol": "tags",
+        "toggleCol": "toggles",
         "username": "",
         "password": ""
     },
     "serverPort": 8888,
-    "readerIP": "127.0.0.1",
+    "readerIP": "101.6.114.22",
     "readerPort": 14
 }
