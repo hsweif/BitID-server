@@ -106,3 +106,6 @@ venv.bak/
 
 # develope env
 .vscode/
+
+# Config file
+config.json

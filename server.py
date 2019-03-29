@@ -9,7 +9,7 @@ import json
 import threading
 import DatabaseHandler as db
 from DataHandler import DataHandler
-import fromback as fb
+from detection import detection
 import util
 
 vueUpdateEPCUrl = 'http://localhost:8000/updateEPC'
@@ -17,12 +17,8 @@ interval = 3
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-# q = queue.Queue()
-# stop = threading.Event()
-# dataHandler = DataHandler(stop)
 config = util.loadConfig()
-# fb.receivedata(config['readerIP'], config['readerPort'])
-# recvThread = threading.Thread(target=fb.receivedata, args=(config['readerIP'], config['readerPort']))
+dt = detection()
 
 @app.route('/')
 def hello_world():
@@ -39,9 +35,9 @@ def save_tag():
 def update_EPC():
     if util.DEBUG:
         # epc = dataHandler.getTopTag()
-        epc = fb.getTopTag()
+        epc = dt.getTopTag()
         print(epc)
-    return fb.getTopTag()
+    return dt.getTopTag()
 
 @app.route('/get-complex-objects', methods=['GET'])
 def get_complex_objects():
@@ -100,8 +96,8 @@ def get_object_sem():
 def get_object_state():
     objName = request.form['objName']
     epcList = db.mongoHandler.getRelatedTag(objName, 'Sensor')
-    fb.updateEPCList(epcList)
-    infoList = fb.getResult() 
+    dt.updateSensingEPC(epcList)
+    infoList = dt.getSensingresult() 
     if util.DEBUG:
         print(epcList)
         print(infoList)
@@ -117,11 +113,10 @@ def get_object_state():
     return json.dumps(j) 
 
 if __name__ == '__main__':
-    # dataHandler.start()
-    # recvThread.start()
-    recvThread = threading.Thread(target=fb.receivedata, args=(config['readerIP'], config['readerPort']))
-    prThread = threading.Thread(target=fb.processdata, args=())
-    # prcsThread = threading.Thread(target=fb.processdata, args=())
+    recvThread = threading.Thread(target=dt.receivedata, args=(config['readerIP'], config['readerPort']))
+    prThread = threading.Thread(target=dt.processdata, args=())
+    resetThread = threading.Thread(target=dt.resetEPC, args=())
     recvThread.start()
     prThread.start()
+    resetThread.start()
     app.run(port=8888, debug=True)
