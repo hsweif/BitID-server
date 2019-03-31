@@ -36,7 +36,7 @@ def update_EPC():
     if util.DEBUG:
         # epc = dataHandler.getTopTag()
         epc = dt.getTopTag()
-        print(epc)
+        # print(epc)
     return dt.getTopTag()
 
 @app.route('/get-complex-objects', methods=['GET'])
@@ -57,6 +57,19 @@ def get_objects():
     print(objList)
     return json.dumps(j)
 
+@app.route('/all-objects-state', methods=['GET'])
+def get_all_state():
+    state = {}
+    objList = db.mongoHandler.getObjects()
+    for o in objList:
+        epcList = db.mongoHandler.getRelatedTag(o, 'Sensor')
+        dt.updateSensingEPC(epcList)
+        infoList = dt.getSensingresult() 
+        print(o + ' ' +str(epcList) +str(infoList))
+        state[o] = infoList
+    return json.dumps(state)
+
+
 @app.route('/get-toggle', methods=['GET'])
 def get_toggles():
     # TODO: implement toggle return
@@ -76,6 +89,7 @@ def get_toggle_action():
         cnt = cnt + 1
     j = {'action': toggleAction}
     return json.dumps(j)
+
 
 @app.route('/get-object-sem', methods=['POST'])
 def get_object_sem():
@@ -98,15 +112,16 @@ def get_object_state():
     epcList = db.mongoHandler.getRelatedTag(objName, 'Sensor')
     dt.updateSensingEPC(epcList)
     infoList = dt.getSensingresult() 
-    if util.DEBUG:
-        print(epcList)
+    if util.DEBUG and objName == 'book':
         print(infoList)
     state_list = []
     cnt = 0
     for item in infoList:
+        if cnt >= len(epcList):
+            break
         sem = db.mongoHandler.getTagSemantic(epcList[cnt], item)
-        if util.DEBUG:
-            print(sem)
+        # if util.DEBUG and objName == 'book':
+        #     print(sem)
         state_list.append(sem)
         cnt = cnt + 1
     j = {'info': state_list}

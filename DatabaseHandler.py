@@ -45,18 +45,19 @@ class DatabaseHandler:
             ctrList = toggle["control"]
         return ctrList
     def getRelatedTag(self, objName, kind):
-        if objName not in self.relatedTags.keys():
-            item = self.objCol.find_one({"name": objName})
+        # if objName not in self.relatedTags.keys():
+        item = self.objCol.find_one({"name": objName})
+        tagL = []
+        if item is None:
             tagL = []
-            if item is None:
-                tagL = []
-            elif kind != 'Sensor' and kind != 'Interaction':
-                tagL = []
-            else:
-                key = 'Related' + kind # kine: Sensor, Interaction
-                tagL = item[key]
-            self.relatedTags[objName] = tagL
-        return self.relatedTags[objName] 
+        elif kind != 'Sensor' and kind != 'Interaction':
+            tagL = []
+        else:
+            key = 'Related' + kind # kine: Sensor, Interaction
+            tagL = item[key]
+        return tagL
+        # self.relatedTags[objName] = tagL
+        # return self.relatedTags[objName] 
     def insertTag(self, rawData):
         r = self.tagCol.insert_one(rawData)
         if util.DEBUG:
@@ -99,8 +100,8 @@ class DatabaseHandler:
                 semList.append(off_sem)
         return semList
     def getTagSemantic(self, epc, state):
-        if util.DEBUG:
-            print(epc)
+        # if util.DEBUG:
+        #     print(epc)
         item = self.tagCol.find_one({"EPC": epc})
         sem = ''
         if item is None:
