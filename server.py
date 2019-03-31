@@ -65,8 +65,16 @@ def get_all_state():
         epcList = db.mongoHandler.getRelatedTag(o, 'Sensor')
         dt.updateSensingEPC(epcList)
         infoList = dt.getSensingresult() 
-        print(o + ' ' +str(epcList) +str(infoList))
-        state[o] = infoList
+        semList = []
+        l = len(epcList)
+        for i in range(0, l):
+            if i >= len(infoList) or infoList[i] == '':
+                semList.append('undetected')
+            else:
+                sem = db.mongoHandler.getTagSemantic(epcList[i], infoList[i])
+                semList.append(sem)
+        print(o + ' ' +str(epcList) +str(semList))
+        state[o] = semList 
     return json.dumps(state)
 
 
