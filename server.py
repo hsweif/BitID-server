@@ -3,12 +3,10 @@ sys.path.append('./AutoID_ML')
 
 from flask import Flask, request
 from flask_cors import *
-import DataHandler
 import queue
 import json
 import threading
 import DatabaseHandler as db
-from DataHandler import DataHandler
 from detection import detection
 import util
 from argparse import ArgumentParser
