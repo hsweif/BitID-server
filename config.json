@@ -8,6 +8,7 @@
         "tagCol": "tags",
         "toggleCol": "toggles",
         "rawCol": "raw_data",
+        "recgCol": "recg_data",
         "username": "",
         "password": ""
     },

@@ -2,6 +2,7 @@ import pymongo
 import util
 import argparse
 import json
+import copy
 
 class DatabaseHandler:
     def __init__(self):
@@ -12,6 +13,7 @@ class DatabaseHandler:
         objColName = config['mongoDB']['objCol']
         tagColName = config['mongoDB']['tagCol']
         rawColName = config['mongoDB']['rawCol']
+        recgColName = config['mongoDB']['recgCol']
         toggleColName = config['mongoDB']['toggleCol']
         path = 'mongodb://'+host+':'+str(port)+'/'
         self.client = pymongo.MongoClient(path)
@@ -20,6 +22,7 @@ class DatabaseHandler:
         self.tagCol = self.db[tagColName]
         self.togCol = self.db[toggleColName]
         self.rawCol = self.db[rawColName]
+        self.recgCol = self.db[recgColName]
         self.relatedTags = {} 
     def insertObject(self, objName):
         newObj = {"name": objName, "RelatedSensor": [], "RelatedInteraction": []}
@@ -51,8 +54,11 @@ class DatabaseHandler:
         if util.DEBUG:
             print(rawData)
             print(r)
+    def saveRecognized(self, recgData):
+        tempData = copy.deepcopy(recgData) 
+        r = self.recgCol.insert_one(tempData)
+        print(r)
     def getRelatedTag(self, objName, kind):
-        # if objName not in self.relatedTags.keys():
         item = self.objCol.find_one({"name": objName})
         tagL = []
         if item is None:
@@ -63,8 +69,6 @@ class DatabaseHandler:
             key = 'Related' + kind # kine: Sensor, Interaction
             tagL = item[key]
         return tagL
-        # self.relatedTags[objName] = tagL
-        # return self.relatedTags[objName] 
     def insertTag(self, rawData):
         r = self.tagCol.insert_one(rawData)
         if util.DEBUG:
@@ -109,7 +113,7 @@ class DatabaseHandler:
     def getTagSemantic(self, epc, state):
         # if util.DEBUG:
         #     print(epc)
-        item = self.tagCol.find_one({"EPC": epc})
+        item = self.tagCol.find_one({"EPC": epc, "TagType": "Sensor"})
         sem = ''
         if item is None:
             return sem

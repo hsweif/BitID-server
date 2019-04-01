@@ -17,12 +17,6 @@ python3 server.py -s
 ```
 
 ## Dependencies
-If you want to use local python environment or face difficulties in using requirements. Make sure your interpreter contains packages below.
-Suppose you use pip to manage your packages, run these commands.
-```bash
-pip3 install flask
-pip3 install pandas
-pip3 install numpy
-```
+If you want to use local python environment or face difficulties in using requirements. Make sure your interpreter contains packages listed in `requirements.txt`.
 Besides, we use MongoDB to store the data. Therefore please be sure you installed mongodb or accessed to the remote one.
 Both MongoDB and reader's settings could be modified in `config.json`.

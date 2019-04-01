@@ -15,6 +15,7 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 config = util.loadConfig()
 dt = detection()
+save_mode = False
 
 @app.route('/')
 def hello_world():
@@ -45,7 +46,8 @@ def get_complex_objects():
 def get_objects():
     objList = db.mongoHandler.getObjects()
     j = {'objects': objList}
-    print(objList)
+    if util.DEBUG:
+        print(objList)
     return json.dumps(j)
 
 @app.route('/all-objects-state', methods=['GET'])
@@ -75,7 +77,8 @@ def get_all_state():
             semList.append(sem)
     for o in objList:
         state[o] = semList[leftIndex[o]:rightIndex[o]]
-    print(state)
+    if save_mode:
+        db.mongoHandler.saveRecognized(state)
     return json.dumps(state)
 
 
@@ -141,10 +144,13 @@ if __name__ == '__main__':
     up_event = threading.Event()
     eventlist = []
     if args.save:
+        save_mode = True
         rawDBHandler = db.DatabaseHandler()
         t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,rawDBHandler))
     else:
-        t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist))
+        save_mode = False
+        t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,))
+
     resetThread = threading.Thread(target=dt.resetEPC, args=())
     t1.start()
     resetThread.start()
