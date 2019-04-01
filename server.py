@@ -61,20 +61,35 @@ def get_objects():
 def get_all_state():
     state = {}
     objList = db.mongoHandler.getObjects()
+    leftIndex = {}
+    rightIndex = {}
+    epcList = []
+    index = 0
     for o in objList:
-        epcList = db.mongoHandler.getRelatedTag(o, 'Sensor')
-        dt.updateSensingEPC(epcList)
-        infoList = dt.getSensingresult() 
-        semList = []
-        l = len(epcList)
-        for i in range(0, l):
-            if i >= len(infoList) or infoList[i] == '':
-                semList.append('undetected')
-            else:
-                sem = db.mongoHandler.getTagSemantic(epcList[i], infoList[i])
-                semList.append(sem)
-        print(o + ' ' +str(epcList) +str(semList))
-        state[o] = semList 
+        leftIndex[o] = index
+        epclist = db.mongoHandler.getRelatedTag(o, 'Sensor')
+        for e in epclist:
+            index += 1
+            epcList.append(e)
+        rightIndex[o] = index
+
+    # for o in objList:
+        # epcList = db.mongoHandler.getRelatedTag(o, 'Sensor')
+    dt.updateSensingEPC(epcList)
+    infoList = dt.getSensingresult() 
+    semList = []
+    l = len(epcList)
+    for i in range(0, l):
+        if i >= len(infoList) or infoList[i] == '':
+            semList.append('undetected')
+        else:
+            sem = db.mongoHandler.getTagSemantic(epcList[i], infoList[i])
+            semList.append(sem)
+    # if util.DEBUG:
+    #     print(str(infoList)+str(objList) + str(semList))
+    for o in objList:
+        state[o] = semList[leftIndex[o]:rightIndex[o]]
+    print(state)
     return json.dumps(state)
 
 
@@ -136,10 +151,18 @@ def get_object_state():
     return json.dumps(j) 
 
 if __name__ == '__main__':
-    recvThread = threading.Thread(target=dt.receivedata, args=(config['readerIP'], config['readerPort']))
-    prThread = threading.Thread(target=dt.processdata, args=())
+    r_event = threading.Event()
+    r_event.set()
+    up_event = threading.Event()
+    eventlist = []
+
+    # recvThread = threading.Thread(target=dt.receivedata, args=(config['readerIP'], config['readerPort']))
+    # prThread = threading.Thread(target=dt.processdata, args=())
+
+    t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,))
     resetThread = threading.Thread(target=dt.resetEPC, args=())
-    recvThread.start()
-    prThread.start()
+    # recvThread.start()
+    # prThread.start()
+    t1.start()
     resetThread.start()
     app.run(port=8888, debug=True)
