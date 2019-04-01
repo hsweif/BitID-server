@@ -13,6 +13,6 @@
         "password": ""
     },
     "serverPort": 8888,
-    "readerIP": "101.6.114.22",
+    "readerIP": "localhost",
     "readerPort": 14
 }
