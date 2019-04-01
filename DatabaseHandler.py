@@ -11,6 +11,7 @@ class DatabaseHandler:
         dbName = config['mongoDB']['dbName']
         objColName = config['mongoDB']['objCol']
         tagColName = config['mongoDB']['tagCol']
+        rawColName = config['mongoDB']['rawCol']
         toggleColName = config['mongoDB']['toggleCol']
         path = 'mongodb://'+host+':'+str(port)+'/'
         self.client = pymongo.MongoClient(path)
@@ -18,6 +19,7 @@ class DatabaseHandler:
         self.objCol = self.db[objColName]
         self.tagCol = self.db[tagColName]
         self.togCol = self.db[toggleColName]
+        self.rawCol = self.db[rawColName]
         self.relatedTags = {} 
     def insertObject(self, objName):
         newObj = {"name": objName, "RelatedSensor": [], "RelatedInteraction": []}
@@ -44,6 +46,11 @@ class DatabaseHandler:
         if toggle is not None:
             ctrList = toggle["control"]
         return ctrList
+    def saveRawData(self, rawData):
+        r = self.rawCol.insert_one(rawData)
+        if util.DEBUG:
+            print(rawData)
+            print(r)
     def getRelatedTag(self, objName, kind):
         # if objName not in self.relatedTags.keys():
         item = self.objCol.find_one({"name": objName})

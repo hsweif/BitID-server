@@ -3,17 +3,13 @@ sys.path.append('./AutoID_ML')
 
 from flask import Flask, request
 from flask_cors import *
-import DataHandler
 import queue
 import json
 import threading
 import DatabaseHandler as db
-from DataHandler import DataHandler
 from detection import detection
 import util
-
-vueUpdateEPCUrl = 'http://localhost:8000/updateEPC'
-interval = 3
+from argparse import ArgumentParser
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -27,16 +23,11 @@ def hello_world():
 @app.route('/save-tag', methods=['POST'])
 def save_tag():
     content = request.form['content']
-    print(content)
     db.mongoHandler.insertTag(json.loads(content))
     return 'success'
 
 @app.route('/update-epc', methods=['GET'])
 def update_EPC():
-    if util.DEBUG:
-        # epc = dataHandler.getTopTag()
-        epc = dt.getTopTag()
-        # print(epc)
     return dt.getTopTag()
 
 @app.route('/get-complex-objects', methods=['GET'])
@@ -72,9 +63,6 @@ def get_all_state():
             index += 1
             epcList.append(e)
         rightIndex[o] = index
-
-    # for o in objList:
-        # epcList = db.mongoHandler.getRelatedTag(o, 'Sensor')
     dt.updateSensingEPC(epcList)
     infoList = dt.getSensingresult() 
     semList = []
@@ -85,8 +73,6 @@ def get_all_state():
         else:
             sem = db.mongoHandler.getTagSemantic(epcList[i], infoList[i])
             semList.append(sem)
-    # if util.DEBUG:
-    #     print(str(infoList)+str(objList) + str(semList))
     for o in objList:
         state[o] = semList[leftIndex[o]:rightIndex[o]]
     print(state)
@@ -95,7 +81,6 @@ def get_all_state():
 
 @app.route('/get-toggle', methods=['GET'])
 def get_toggles():
-    # TODO: implement toggle return
     toggleList = db.mongoHandler.getToggles()
     j = {'toggle': toggleList}
     return json.dumps(j) 
@@ -135,34 +120,32 @@ def get_object_state():
     epcList = db.mongoHandler.getRelatedTag(objName, 'Sensor')
     dt.updateSensingEPC(epcList)
     infoList = dt.getSensingresult() 
-    if util.DEBUG and objName == 'book':
-        print(infoList)
     state_list = []
     cnt = 0
     for item in infoList:
         if cnt >= len(epcList):
             break
         sem = db.mongoHandler.getTagSemantic(epcList[cnt], item)
-        # if util.DEBUG and objName == 'book':
-        #     print(sem)
         state_list.append(sem)
         cnt = cnt + 1
     j = {'info': state_list}
     return json.dumps(j) 
 
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument("-s", "--save", action="store_true", help="Do you want to save the raw data to the mongodb or not?")
+    args = parser.parse_args()
+
     r_event = threading.Event()
     r_event.set()
     up_event = threading.Event()
     eventlist = []
-
-    # recvThread = threading.Thread(target=dt.receivedata, args=(config['readerIP'], config['readerPort']))
-    # prThread = threading.Thread(target=dt.processdata, args=())
-
-    t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,))
+    if args.save:
+        rawDBHandler = db.DatabaseHandler()
+        t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,rawDBHandler))
+    else:
+        t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist))
     resetThread = threading.Thread(target=dt.resetEPC, args=())
-    # recvThread.start()
-    # prThread.start()
     t1.start()
     resetThread.start()
     app.run(port=8888, debug=True)
