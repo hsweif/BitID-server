@@ -165,4 +165,4 @@ if __name__ == '__main__':
     # prThread.start()
     t1.start()
     resetThread.start()
-    app.run(port=8888, debug=True)
+    app.run(port=8888, debug=False, host='0.0.0.0')
