@@ -1,6 +1,5 @@
 {
     "storeMethod": "local",
-    "objectPath": "./objects",
     "mongoDB": {
         "host": "localhost",
         "port": 27017,
@@ -8,6 +7,7 @@
         "objCol": "objects",
         "tagCol": "tags",
         "toggleCol": "toggles",
+        "rawCol": "raw_data",
         "username": "",
         "password": ""
     },
