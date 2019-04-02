@@ -26,6 +26,8 @@ class DatabaseHandler:
         self.updateTag = True 
         self.updateObj = True
         self.relatedTags = {} 
+        self.rawToInsert = []
+        self.recgToInsert = []
     def insertObject(self, objName):
         self.updateObj = True
         newObj = {"name": objName, "RelatedSensor": [], "RelatedInteraction": []}
@@ -53,14 +55,26 @@ class DatabaseHandler:
             ctrList = toggle["control"]
         return ctrList
     def saveRawData(self, rawData):
-        r = self.rawCol.insert_one(rawData)
+        tempData = copy.deepcopy(rawData) 
+        self.rawToInsert.append(tempData)
+        if len(self.rawToInsert) > 1000:
+            r = self.rawCol.insert_many(self.rawToInsert)
+            self.rawToInsert.clear()
+            self.rawToInsert = []
+            print(r)
         if util.DEBUG:
             print(rawData)
             print(r)
     def saveRecognized(self, recgData):
         tempData = copy.deepcopy(recgData) 
-        r = self.recgCol.insert_one(tempData)
-        print(r)
+        self.recgToInsert.append(tempData)
+        if len(self.recgToInsert) > 100:
+            r = self.recgCol.insert_many(self.recgToInsert)
+            self.recgToInsert.clear()
+            self.recgToInsert = []
+            print(r)
+        if util.DEBUG:
+            print(r)
     def getRelatedTag(self, objName, kind):
         if self.updateTag == True or objName not in self.relatedTags.keys():
             item = self.objCol.find_one({"name": objName})
