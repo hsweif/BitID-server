@@ -23,8 +23,11 @@ class DatabaseHandler:
         self.togCol = self.db[toggleColName]
         self.rawCol = self.db[rawColName]
         self.recgCol = self.db[recgColName]
+        self.updateTag = True 
+        self.updateObj = True
         self.relatedTags = {} 
     def insertObject(self, objName):
+        self.updateObj = True
         newObj = {"name": objName, "RelatedSensor": [], "RelatedInteraction": []}
         cnt = 0
         for item in self.objCol.find({"name": objName}):
@@ -59,17 +62,21 @@ class DatabaseHandler:
         r = self.recgCol.insert_one(tempData)
         print(r)
     def getRelatedTag(self, objName, kind):
-        item = self.objCol.find_one({"name": objName})
-        tagL = []
-        if item is None:
+        if self.updateTag == True or objName not in self.relatedTags.keys():
+            item = self.objCol.find_one({"name": objName})
             tagL = []
-        elif kind != 'Sensor' and kind != 'Interaction':
-            tagL = []
-        else:
-            key = 'Related' + kind # kine: Sensor, Interaction
-            tagL = item[key]
-        return tagL
+            if item is None:
+                tagL = []
+            elif kind != 'Sensor' and kind != 'Interaction':
+                tagL = []
+            else:
+                key = 'Related' + kind # kine: Sensor, Interaction
+                tagL = item[key]
+            self.updateTag = False
+            self.relatedTags[objName] = copy.deepcopy(tagL)
+        return self.relatedTags[objName]
     def insertTag(self, rawData):
+        self.updateTag = True
         r = self.tagCol.insert_one(rawData)
         if util.DEBUG:
             print(r)

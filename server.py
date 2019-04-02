@@ -86,8 +86,8 @@ def get_all_state():
     #     print(str(infoList)+str(objList) + str(semList))
     for o in objList:
         state[o] = semList[leftIndex[o]:rightIndex[o]]
-    if save_mode:
-        db.mongoHandler.saveRecognized(state)
+    # if save_mode:
+    #     db.mongoHandler.saveRecognized(state)
     return json.dumps(state)
 
 
@@ -165,7 +165,7 @@ def control_init():
 def control_task(sonos, bulb, r_event, eventlist):
     global sensingdict
     # phone status
-    muteFlag = False
+    muteFlag = sonos.mute 
     phoneEPC = 'E20000193907010113104906'
     EPClist = ['E2000019390700211300052E']
     iiii = 0
