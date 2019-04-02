@@ -10,8 +10,8 @@ import DatabaseHandler as db
 from detection import detection
 import util
 from argparse import ArgumentParser
-import soco
-import yeelight
+# import soco
+# import yeelight
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     r_event.set()
     up_event = threading.Event()
     eventlist = [up_event]
-    sonos, bulb = control_init()
+    # sonos, bulb = control_init()
     if args.save:
         save_mode = True
         rawDBHandler = db.DatabaseHandler()
@@ -215,9 +215,9 @@ if __name__ == '__main__':
         t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,))
 
     resetThread = threading.Thread(target=dt.resetEPC, args=())
-    t2 = threading.Thread(target=control_task, args=(sonos,bulb,r_event, eventlist,))
+    # t2 = threading.Thread(target=control_task, args=(sonos,bulb,r_event, eventlist,))
     t1.start()
-    t2.start()
+    # t2.start()
     resetThread.start()
     app.run(port=8888, debug=False, host='0.0.0.0')
 

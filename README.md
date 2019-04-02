@@ -11,6 +11,15 @@ Simply use below command to run the server in localhost:8000
 python3 server.py
 ```
 
+### Database management
+We also provide simple command line interface to interact with MongoDB.
+You can delete an object from the database or add toggle control to the database with:
+```bash
+python3 DatabaseHandler.py --mode delete
+python3 DatabaseHandler.py --mode toggle
+```
+Further instructions can be found in the interactive environment.
+
 You can choose to store the raw data into MongoDB with:
 ```bash
 python3 server.py -s

@@ -1,6 +1,6 @@
 import pymongo
 import util
-import argparse
+from argparse import ArgumentParser
 import json
 import copy
 
@@ -87,7 +87,7 @@ class DatabaseHandler:
                 key = 'Related' + kind # kine: Sensor, Interaction
                 tagL = item[key]
             self.updateTag = False
-            self.relatedTags[objName] = copy.deepcopy(tagL)
+            self.relatedTags[objName] = tagL
         return self.relatedTags[objName]
     def insertTag(self, rawData):
         self.updateTag = True
@@ -149,26 +149,50 @@ mongoHandler = DatabaseHandler()
 if __name__ == '__main__':
     # mongoHandler.insertTag({"EPC": 'testid2', "TagType": 'Sensor', "Semantic": [{"RelatedObject": "desk4"}]})
     # item = mongoHandler.objCol.find_one({"name": "desk1"})
-    print('This is the interaction mode to set up toggle meaning')
-    while True:
-        objName = input('Please input the object name. Empty to exit:\n')
-        if objName == '':
-            break
-        semList = []
-        print('Please input the controllable action. Left empty means finish adding:')
+
+    parser = ArgumentParser()
+    parser.add_argument("-m", "--mode", help="[delete, toggle]", dest="mode", required=True)
+
+    args = parser.parse_args()
+    if args.mode == 'toggle':
+        print('This is the interaction mode to set up toggle meaning')
         while True:
-            sem = input('One another control action:\n')
-            if sem == '':
+            objName = input('Please input the object name. Empty to exit:\n')
+            if objName == '':
                 break
-            semList.append(sem)
-        item = mongoHandler.togCol.find_one({"name": objName})
-        print(item)
-        if item is None:
-            mongoHandler.togCol.insert_one({"name": objName, "control": []})
+            semList = []
+            print('Please input the controllable action. Left empty means finish adding:')
+            while True:
+                sem = input('One another control action:\n')
+                if sem == '':
+                    break
+                semList.append(sem)
             item = mongoHandler.togCol.find_one({"name": objName})
-        origList = item["control"]
-        for s in semList:
-            origList.append(s)
-        if util.DEBUG:
-            print(origList)
-        mongoHandler.togCol.update_one({"name": objName}, {"$set": {"control": origList}})
+            print(item)
+            if item is None:
+                mongoHandler.togCol.insert_one({"name": objName, "control": []})
+                item = mongoHandler.togCol.find_one({"name": objName})
+            origList = item["control"]
+            for s in semList:
+                origList.append(s)
+            if util.DEBUG:
+                print(origList)
+            mongoHandler.togCol.update_one({"name": objName}, {"$set": {"control": origList}})
+    elif args.mode == 'delete':
+        print('This is the interaction mode to delete an object. The object you input and its related tags will be deleted.')
+        while True:
+            objName = input('Please input the object name. Empty to exit:\n')
+            if objName == '':
+                break
+            item = mongoHandler.objCol.find_one({"name": objName})
+            if item is None:
+                print('The object is unfound.')
+                continue
+            tagList = []
+            for tag in item['RelatedSensor']:
+                tagList.append(tag)
+            for tag in item['RelatedInteraction']:
+                tagList.append(tag)
+            for tag in tagList:
+                mongoHandler.tagCol.delete_many({"EPC": tag})
+            mongoHandler.objCol.delete_many({"name":objName})
