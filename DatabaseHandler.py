@@ -58,7 +58,7 @@ class DatabaseHandler:
         tempData = copy.deepcopy(rawData) 
         self.rawToInsert.append(tempData)
         if len(self.rawToInsert) > 1000:
-            r = self.rawCol.insert_many(self.rawToInsert)
+            r = self.rawCol.insert_many(copy.deepcopy(self.rawToInsert))
             self.rawToInsert.clear()
             self.rawToInsert = []
             print(r)
@@ -69,7 +69,7 @@ class DatabaseHandler:
         tempData = copy.deepcopy(recgData) 
         self.recgToInsert.append(tempData)
         if len(self.recgToInsert) > 100:
-            r = self.recgCol.insert_many(self.recgToInsert)
+            r = self.recgCol.insert_many(copy.deepcopy(self.recgToInsert))
             self.recgToInsert.clear()
             self.recgToInsert = []
             print(r)
