@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
 import sys
 sys.path.append('./AutoID_ML')
 
@@ -10,8 +12,8 @@ import DatabaseHandler as db
 from detection import detection
 import util
 from argparse import ArgumentParser
-# import soco
-# import yeelight
+import soco
+import yeelight
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -154,6 +156,7 @@ def control_init():
         sonos.play_mode = 'REPEAT_ONE'
         sonos.play_uri('http://img.tukuppt.com/newpreview_music/09/01/52/5c89f044e48f61497.mp3')
         sonos.volumn = 6
+        sonos.mute = False
     print(bulb)
     if bulb:
         bulb.turn_off()
@@ -165,14 +168,13 @@ def control_init():
 def control_task(sonos, bulb, r_event, eventlist):
     global sensingdict
     # phone status
-    muteFlag = sonos.mute 
+    muteFlag = False
     phoneEPC = 'E20000193907010113104906'
     EPClist = ['E2000019390700211300052E']
     iiii = 0
 
     print("start!!!!")
     while r_event.is_set():
-        # 获取phone的状态
         # print('control', sensingdict)
         if phoneEPC in sensingdict.keys():
             phonestatus = sensingdict[phoneEPC]
@@ -182,7 +184,6 @@ def control_task(sonos, bulb, r_event, eventlist):
         dt.updateInteractionEPC(EPClist)
         for event in eventlist:
             if event.is_set():
-                # 说明此时有点击事件
                 if phonestatus:
                     print("sonos.mute:", sonos.mute)
                     muteFlag = ~muteFlag
@@ -205,7 +206,7 @@ if __name__ == '__main__':
     r_event.set()
     up_event = threading.Event()
     eventlist = [up_event]
-    # sonos, bulb = control_init()
+    sonos, bulb = control_init()
     if args.save:
         save_mode = True
         rawDBHandler = db.DatabaseHandler()
@@ -215,9 +216,9 @@ if __name__ == '__main__':
         t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,))
 
     resetThread = threading.Thread(target=dt.resetEPC, args=())
-    # t2 = threading.Thread(target=control_task, args=(sonos,bulb,r_event, eventlist,))
+    t2 = threading.Thread(target=control_task, args=(sonos,bulb,r_event, eventlist,))
     t1.start()
-    # t2.start()
+    t2.start()
     resetThread.start()
     app.run(port=8888, debug=False, host='0.0.0.0')
 

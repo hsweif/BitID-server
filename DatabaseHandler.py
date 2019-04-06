@@ -76,18 +76,18 @@ class DatabaseHandler:
         if util.DEBUG:
             print(r)
     def getRelatedTag(self, objName, kind):
-        if self.updateTag == True or objName not in self.relatedTags.keys():
-            item = self.objCol.find_one({"name": objName})
+        # if self.updateTag == True or objName not in self.relatedTags.keys():
+        item = self.objCol.find_one({"name": objName})
+        tagL = []
+        if item is None:
             tagL = []
-            if item is None:
-                tagL = []
-            elif kind != 'Sensor' and kind != 'Interaction':
-                tagL = []
-            else:
-                key = 'Related' + kind # kine: Sensor, Interaction
-                tagL = item[key]
-            self.updateTag = False
-            self.relatedTags[objName] = tagL
+        elif kind != 'Sensor' and kind != 'Interaction':
+            tagL = []
+        else:
+            key = 'Related' + kind # kine: Sensor, Interaction
+            tagL = item[key]
+        self.updateTag = False
+        self.relatedTags[objName] = tagL
         return self.relatedTags[objName]
     def insertTag(self, rawData):
         self.updateTag = True
