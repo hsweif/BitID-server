@@ -101,7 +101,11 @@ def get_toggles():
 
 @app.route('/remove-object', methods=['POST'])
 def remove_object():
+    global sensingdict
     objName = request.form['objName']
+    tagList = db.mongoHandler.getRelatedTag(objName, 'Sensor')
+    for tag in tagList:
+        sensingdict.pop(tag)
     db.mongoHandler.removeObject(objName)
     return 'success'
 
@@ -206,13 +210,15 @@ def control_task(sonos, bulb, r_event, eventlist):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("-s", "--save", action="store_true", help="Do you want to save the raw data to the mongodb or not?")
+    parser.add_argument("--test", action="store_true")
     args = parser.parse_args()
 
     r_event = threading.Event()
     r_event.set()
     up_event = threading.Event()
     eventlist = [up_event]
-    sonos, bulb = control_init()
+    if args.test is not True:
+        sonos, bulb = control_init()
     if args.save:
         save_mode = True
         rawDBHandler = db.DatabaseHandler()
@@ -222,9 +228,10 @@ if __name__ == '__main__':
         t1 = threading.Thread(target=dt.detect_status, args=(config['readerIP'], config['readerPort'],r_event,eventlist,))
 
     resetThread = threading.Thread(target=dt.resetEPC, args=())
-    t2 = threading.Thread(target=control_task, args=(sonos,bulb,r_event, eventlist,))
     t1.start()
-    t2.start()
+    if args.test is not True:
+        t2 = threading.Thread(target=control_task, args=(sonos,bulb,r_event, eventlist,))
+        t2.start()
     resetThread.start()
     app.run(port=8888, debug=False, host='0.0.0.0')
 

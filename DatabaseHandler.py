@@ -156,8 +156,8 @@ class DatabaseHandler:
         for tag in item['RelatedInteraction']:
             tagList.append(tag)
         for tag in tagList:
-            mongoHandler.tagCol.delete_many({"EPC": tag})
-        mongoHandler.objCol.delete_many({"name":objName})
+            self.tagCol.delete_many({"EPC": tag})
+        self.objCol.delete_many({"name":objName})
 
 mongoHandler = DatabaseHandler()
 
