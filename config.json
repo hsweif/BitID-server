@@ -1,5 +1,4 @@
 {
-    "storeMethod": "local",
     "mongoDB": {
         "host": "localhost",
         "port": 27017,

@@ -99,6 +99,12 @@ def get_toggles():
     j = {'toggle': toggleList}
     return json.dumps(j) 
 
+@app.route('/remove-object', methods=['POST'])
+def remove_object():
+    objName = request.form['objName']
+    db.mongoHandler.removeObject(objName)
+    return 'success'
+
 
 @app.route('/get-toggle-action', methods=['POST'])
 def get_toggle_action():

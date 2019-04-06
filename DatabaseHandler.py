@@ -30,6 +30,7 @@ class DatabaseHandler:
         self.recgToInsert = []
     def insertObject(self, objName):
         self.updateObj = True
+        self.updateTag = True
         newObj = {"name": objName, "RelatedSensor": [], "RelatedInteraction": []}
         cnt = 0
         for item in self.objCol.find({"name": objName}):
@@ -86,9 +87,9 @@ class DatabaseHandler:
         else:
             key = 'Related' + kind # kine: Sensor, Interaction
             tagL = item[key]
-        self.updateTag = False
-        self.relatedTags[objName] = tagL
-        return self.relatedTags[objName]
+        # self.updateTag = False
+        # self.relatedTags[objName] = tagL
+        return tagL
     def insertTag(self, rawData):
         self.updateTag = True
         r = self.tagCol.insert_one(rawData)
@@ -143,13 +144,24 @@ class DatabaseHandler:
         else: #undetected
             sem = item['Semantic'][0]['OFF']
         return sem
+    def removeObject(self, objName):
+        # TODO: Should I support the relevent removal from Interaction condition?
+        item = mongoHandler.objCol.find_one({"name": objName})
+        if item is None:
+            print('The object is not found.')
+            return
+        tagList = []
+        for tag in item['RelatedSensor']:
+            tagList.append(tag)
+        for tag in item['RelatedInteraction']:
+            tagList.append(tag)
+        for tag in tagList:
+            mongoHandler.tagCol.delete_many({"EPC": tag})
+        mongoHandler.objCol.delete_many({"name":objName})
 
 mongoHandler = DatabaseHandler()
 
 if __name__ == '__main__':
-    # mongoHandler.insertTag({"EPC": 'testid2', "TagType": 'Sensor', "Semantic": [{"RelatedObject": "desk4"}]})
-    # item = mongoHandler.objCol.find_one({"name": "desk1"})
-
     parser = ArgumentParser()
     parser.add_argument("-m", "--mode", help="[delete, toggle]", dest="mode", required=True)
 
@@ -184,15 +196,5 @@ if __name__ == '__main__':
             objName = input('Please input the object name. Empty to exit:\n')
             if objName == '':
                 break
-            item = mongoHandler.objCol.find_one({"name": objName})
-            if item is None:
-                print('The object is unfound.')
-                continue
-            tagList = []
-            for tag in item['RelatedSensor']:
-                tagList.append(tag)
-            for tag in item['RelatedInteraction']:
-                tagList.append(tag)
-            for tag in tagList:
-                mongoHandler.tagCol.delete_many({"EPC": tag})
-            mongoHandler.objCol.delete_many({"name":objName})
+            mongoHandler.removeObject(objName)
+            
