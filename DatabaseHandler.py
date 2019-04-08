@@ -3,6 +3,8 @@ import util
 from argparse import ArgumentParser
 import json
 import copy
+from bson.objectid import ObjectId
+import datetime
 
 class DatabaseHandler:
     def __init__(self):
@@ -44,6 +46,25 @@ class DatabaseHandler:
         for obj in self.objCol.find():
             objList.append(obj["name"])
         return objList
+    def getMongoData(self, dbName, startTime, endTime):
+        db = None
+        if dbName == util.TAG:
+            db = self.tagCol
+        elif dbName == util.OBJECT:
+            db = self.objCol
+        elif dbName == util.RECG:
+            db = self.recgCol
+        elif dbName == util.RAW:
+            db = self.rawCol
+        if db is None:
+            return None
+        result = []
+        startId = ObjectId.from_datetime(generation_time=startTime)
+        endId = ObjectId.from_datetime(generation_time=endTime)
+        items = db.find({'_id':{'$lt' : endId, '$gte' : startId}})
+        for item in items:
+            result.append(item)
+        return result
     def getToggles(self):
         toggleList = []
         for tog in self.togCol.find():
@@ -197,4 +218,9 @@ if __name__ == '__main__':
             if objName == '':
                 break
             mongoHandler.removeObject(objName)
+    elif args.mode == 'mongotest':
+        start_time = datetime.datetime(2019, 4, 8, 0, 0, 0)
+        end_time = datetime.datetime(2020, 3, 28, 0, 0, 0)
+        result = mongoHandler.getMongoData(util.OBJECT, startTime=start_time, endTime=end_time)
+        print(result)
             

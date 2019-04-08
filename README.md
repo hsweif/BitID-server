@@ -24,6 +24,14 @@ You can choose to store the raw data into MongoDB with:
 ```bash
 python3 server.py -s
 ```
+On the other hand, if you want to get data in a specific range from mongodb. We provided a method in Databasehandler. Use as:
+```python
+TYPE = util.OBJECT # or util.TAG | util.RAW | util.RECG
+result = db.mongoHandler.getMongoData(TYPE, start_time, end_time)
+# start_time, end_time are datetime object
+# you can get a list of documents in this time range in result.
+```
+You can see DatabaseHandler.py's main function for more detailed usage.
 
 ## Dependencies
 If you want to use local python environment or face difficulties in using requirements. Make sure your interpreter contains packages listed in `requirements.txt`.

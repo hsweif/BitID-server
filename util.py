@@ -15,3 +15,7 @@ def filtFileName(rawName, kind='JSON'):
 DEBUG = False 
 SENSOR = 'Sensor'
 INTERACTION = 'Interaction'
+TAG = 'Tag'
+OBJECT = 'Object'
+RAW = 'Raw'
+RECG = 'Recg'
