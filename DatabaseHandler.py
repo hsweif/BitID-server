@@ -179,6 +179,8 @@ class DatabaseHandler:
         for tag in tagList:
             self.tagCol.delete_many({"EPC": tag})
         self.objCol.delete_many({"name":objName})
+    def PKTime(self, year, month, day, hour, minute, sec):
+        return datetime.datetime(year, month, day, hour - 8, minute, sec)
 
 mongoHandler = DatabaseHandler()
 
@@ -219,8 +221,8 @@ if __name__ == '__main__':
                 break
             mongoHandler.removeObject(objName)
     elif args.mode == 'mongotest':
-        start_time = datetime.datetime(2019, 4, 8, 0, 0, 0)
-        end_time = datetime.datetime(2020, 3, 28, 0, 0, 0)
+        start_time = mongoHandler.PKTime(2019, 4, 8, 0, 0, 0)
+        end_time = mongoHandler.PKTime(2020, 3, 28, 0, 0, 0)
         result = mongoHandler.getMongoData(util.OBJECT, startTime=start_time, endTime=end_time)
         print(result)
             
