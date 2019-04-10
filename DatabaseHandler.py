@@ -181,6 +181,13 @@ class DatabaseHandler:
         self.objCol.delete_many({"name":objName})
     def PKTime(self, year, month, day, hour, minute, sec):
         return datetime.datetime(year, month, day, hour - 8, minute, sec)
+    def timeStamp2Datetime(self, timeStamp):
+        d = datetime.datetime.fromtimestamp(timeStamp)
+        str1 = d.strftime("%Y-%m-%d %H:%M:%S.%f")
+        print(str1)
+        # 2015-08-28 16:43:37.283000'
+        return d 
+
 
 mongoHandler = DatabaseHandler()
 
@@ -221,6 +228,7 @@ if __name__ == '__main__':
                 break
             mongoHandler.removeObject(objName)
     elif args.mode == 'mongotest':
+        t = mongoHandler.timeStamp2Datetime(1554791393)
         start_time = mongoHandler.PKTime(2019, 4, 8, 0, 0, 0)
         end_time = mongoHandler.PKTime(2020, 3, 28, 0, 0, 0)
         result = mongoHandler.getMongoData(util.OBJECT, startTime=start_time, endTime=end_time)
