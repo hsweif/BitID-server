@@ -5,6 +5,7 @@ import json
 import copy
 from bson.objectid import ObjectId
 import datetime
+import re
 
 class DatabaseHandler:
     def __init__(self):
@@ -165,6 +166,23 @@ class DatabaseHandler:
         else: #undetected
             sem = item['Semantic'][0]['OFF']
         return sem
+    def getObjectType(self, objName):
+        tags = self.getRelatedTag(objName, util.SENSOR)
+        tag = tags[0]
+        item = self.tagCol.find_one({"EPC": tag})
+        if item is None:
+            return None
+        return item['SensingType']
+    def sem2State(self, objName, sem):
+        tags = self.getRelatedTag(objName, util.SENSOR)
+        print(objName + ',' + sem + str(tags))
+        tag = tags[0]
+        if sem == self.getTagSemantic(tag, True):
+            return True
+        elif sem == self.getTagSemantic(tag, False):
+            return False 
+        else:
+            return None
     def removeObject(self, objName):
         # TODO: Should I support the relevent removal from Interaction condition?
         item = mongoHandler.objCol.find_one({"name": objName})
@@ -190,6 +208,9 @@ class DatabaseHandler:
 
 
 mongoHandler = DatabaseHandler()
+
+               
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()
