@@ -23,8 +23,7 @@ mileStone4 = []
 allEvent = []
 
 class info:
-    def __init__(self, objName, status, timeStamp=None):
-        self.timeStamp = timeStamp
+    def __init__(self, objName, status):
         self.objName = objName
         self.status = status 
 
@@ -48,6 +47,8 @@ def initEvent():
             allEvent.append(item)
 
 def processCSV(origCSV):
+    global allEvent
+    global defaultstatus
     infoList = []
     stampList = []
     with open(origCSV, 'r') as f:
@@ -68,9 +69,6 @@ def processCSV(origCSV):
         print("Event list size:" + str(len(allEvent)))
         return
 
-    for i in range(0, len(stampList)):
-        allEvent[i].timeStamp = stampList[i]
-
     stateDict = dict() 
     nameList = list() 
     for item in mileStone1:
@@ -78,15 +76,15 @@ def processCSV(origCSV):
             continue
         if item.objName not in stateDict.keys():
             nameList.append(item.objName)
-            stateDict[item.objName] = item.status
+            stateDict[item.objName] = defaultstatus[item.objName] 
     with open(origCSV+'_converted.csv', 'w') as f:
         for name in nameList:
             f.write(','+name)
         f.write('\n')
-        for e in allEvent:
-            f.write(e.timeStamp)
-            if e.status != None:
-                stateDict[e.objName] = e.status
+        for i in range(0, len(allEvent)):
+            f.write(stampList[i])
+            if allEvent[i].status != None:
+                stateDict[allEvent[i].objName] = allEvent[i].status
             for name in nameList:
                 f.write(',' + str(stateDict[name]))
             f.write('\n')
@@ -97,11 +95,12 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--src", dest="fileName", help="The file you want to transfer.", required=True)
     args = parser.parse_args()
     fileName = args.fileName
+    initEvent()
+    processCSV('./data/2018310831.csv')
     if not os.path.exists(fileName):
         print("[ERROR] File path doesn't exist")
         exit()
     initEvent()
-    # processCSV('./data/2018310831.csv')
     processCSV(fileName)
     print("finished!")
  
