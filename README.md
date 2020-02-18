@@ -4,11 +4,22 @@ This repo is used for the experiment demand of Project AutoID, a pervasive compu
 
 ## Usage
 
-It is recommended to run this repo with a Python3 virtualenv. You can install the dependencies with:
+### Installation
+
+After cloning the repo, you will need to initialize the submodule.
 
 ```bash
-pip3 install -r requirements.txt
+git submodule init
+git submodule update
 ```
+
+For Python dependencies, it is recommended to run this repo with a Python3 virtualenv with pip. You can install the dependencies with:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run
 
 Simply use below command to run the server in localhost:8000
 
@@ -50,3 +61,5 @@ You can see DatabaseHandler.py's main function for more detailed usage.
 If you want to use local python environment or face difficulties in using requirements. Make sure your interpreter contains packages listed in `requirements.txt`.
 Besides, we use MongoDB to store the data. Therefore please be sure you installed mongodb or accessed to the remote one.
 Both MongoDB and reader's settings could be modified in `config.json`.
+
+**Please run the MongoDB on the port you assigned in `config.json` to store the records.**
