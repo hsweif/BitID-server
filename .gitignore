@@ -106,6 +106,7 @@ venv.bak/
 
 # develope env
 .vscode/
+.DS_Store
 
 # Config file
 config.json
